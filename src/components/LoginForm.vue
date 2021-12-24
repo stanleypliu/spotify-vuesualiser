@@ -18,6 +18,12 @@
 
   const username = ref('')
   const password = ref('')
+
+  const loggedIn = ref(false)
+
+  function authenticate() {
+    
+  }
 </script>
 
 <style lang="scss" scoped>
