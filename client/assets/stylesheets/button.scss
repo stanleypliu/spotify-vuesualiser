@@ -1,0 +1,28 @@
+button {
+  background-color: $spotify-green;
+  border-radius: 30px;
+  color: white;
+
+  font-family: $font-body;
+  font-weight: bold;
+  font-size: 20px;
+
+  margin: 0 auto;
+  padding: 8px 32px;
+
+  display: block;
+
+  transition: 0.5s;
+
+  &:hover:not(:disabled) {
+    background-color: green;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+  }
+
+  &.active {
+    background-color: darkgreen;
+  }
+}

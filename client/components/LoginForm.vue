@@ -1,105 +1,150 @@
 <template>
   <div class="oauth-wrapper">
-    <form class="login-form" @submit.prevent="authenticate">
-      <h4 class="login-form__title">Sign in through Spotify</h4>
-      <div class="login-form__fields">
-        <label for="username" class="login-form__label">Username</label>
-        <input class="login-form__field" type="text" name="Username" id="username" v-model.trim="username"/>
-        <label for="password" class="login-form__label">Password</label>
-        <input class="login-form__field" type="password" name="Password" id="password" v-model.trim="password"/>
-        <button type="submit" :disabled="username === '' || password === ''">Log In Via OAuth</button>
-      </div>
-    </form>
+    <h4 class="login-form__title">
+      To begin, please authorise your Spotify account.
+    </h4>
+    <button class="oauth-button" type="submit" @click="loginWithSpotifyClick()">
+      Log Into Spotify
+    </button>
   </div>
 </template>
 
 <script setup>
-  import { ref } from 'vue'
+import { onMounted } from "vue";
+import { useTokenStore } from "../store/store";
 
-  const username = ref('')
-  const password = ref('')
+const store = useTokenStore();
 
-  const loggedIn = ref(false)
+const emit = defineEmits(["logged-in"]);
+const clientId = import.meta.env.VITE_CLIENT_ID; // your clientId
+const redirectUrl = "http://localhost:3000"; // your redirect URL - must be localhost URL and/or HTTPS
 
-  function authenticate() {
-    
+const authorizationEndpoint = "https://accounts.spotify.com/authorize";
+const tokenEndpoint = "https://accounts.spotify.com/api/token";
+const scope = "user-read-private user-read-email user-top-read";
+
+function saveToken(response) {
+  const { access_token, refresh_token, expires_in } = response;
+  console.log(store);
+
+  store.update((state) => {
+    state.accessToken = access_token;
+    state.refreshToken = refresh_token;
+    state.expiresIn = expires_in;
+    const now = new Date();
+    const expiry = new Date(now.getTime() + expires_in * 1000).toString();
+    state.expires = expiry;
+  });
+}
+
+// Move the token exchange logic to a separate function
+async function handleTokenExchange() {
+  const args = new URLSearchParams(window.location.search);
+  const code = args.get("code");
+
+  if (code) {
+    const token = await getToken(code);
+    saveToken(token);
+
+    // Remove code from URL so we can refresh correctly.
+    const url = new URL(window.location.href);
+    url.searchParams.delete("code");
+
+    const updatedUrl = url.search ? url.href : url.href.replace("?", "");
+    window.history.replaceState({}, document.title, updatedUrl);
   }
+
+  emit("logged-in");
+}
+
+// Call the function when the component is mounted
+onMounted(() => {
+  handleTokenExchange();
+});
+
+// Soptify API Calls
+async function getToken(code) {
+  const code_verifier = store.codeVerifier;
+
+  const response = await fetch(tokenEndpoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: new URLSearchParams({
+      client_id: clientId,
+      grant_type: "authorization_code",
+      code: code,
+      redirect_uri: redirectUrl,
+      code_verifier: code_verifier,
+    }),
+  });
+
+  return await response.json();
+}
+
+async function loginWithSpotifyClick() {
+  await redirectToSpotifyAuthorize();
+}
+
+async function redirectToSpotifyAuthorize() {
+  const possible =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  const randomValues = crypto.getRandomValues(new Uint8Array(64));
+  const randomString = randomValues.reduce(
+    (acc, x) => acc + possible[x % possible.length],
+    ""
+  );
+
+  const code_verifier = randomString;
+  const data = new TextEncoder().encode(code_verifier);
+  const hashed = await crypto.subtle.digest("SHA-256", data);
+
+  const code_challenge_base64 = btoa(
+    String.fromCharCode(...new Uint8Array(hashed))
+  )
+    .replace(/=/g, "")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_");
+
+  store.codeVerifier = code_verifier;
+
+  const authUrl = new URL(authorizationEndpoint);
+  const params = {
+    response_type: "code",
+    client_id: clientId,
+    scope: scope,
+    code_challenge_method: "S256",
+    code_challenge: code_challenge_base64,
+    redirect_uri: redirectUrl,
+  };
+
+  authUrl.search = new URLSearchParams(params).toString();
+  window.location.href = authUrl.toString(); // Redirect the user to the authorization server for login
+}
 </script>
 
 <style lang="scss" scoped>
 @import "../assets/stylesheets/variables.scss";
-.oauth-wrapper {
-  background-color: black;
-  border: 1px solid white;
-  border-radius: 6px;
 
+.oauth-wrapper {
   margin: 80px auto;
 
   height: 60%;
-  width: 400px;
+}
+
+.oauth-button {
+  font-weight: bold;
+  margin-top: 40px;
+  font-size: 16px;
 }
 
 .login-form {
-  color: white;
-
   &__title {
+    color: white;
     margin-top: 40px;
     margin-bottom: 10px;
     text-align: center;
-  }
-
-  &__fields {
-    padding: 30px;
-  }
-
-  &__label {
-    font-family: $font-body;
-    text-align: left;
-  }
-
-  &__field {
-    border: 1px solid black;
-    border-radius: 2px;
-
-    margin-top: 10px;
-    margin-left: auto;
-    margin-bottom: 20px;
-    margin-right: auto;
-    padding: 10px;
-
-    width: 100%;
-
-    display: block;
-
-    &:last-of-type {
-      margin-bottom: 40px;
-    }
-  }
-}
-
-button {
-  background-color: $spotify-green;
-  border-radius: 3px;
-  color: white;
-
-  font-family: $font-body;
-  font-weight: bold;
-  font-size: 20px;
-  text-transform: uppercase;
-
-  margin: 0 auto;
-  padding: 8px 10px;
-
-  display: block;
-
-  transition: 0.5s;
-
-  &:hover:not(:disabled) {
-    background-color: green;
-  }
-
-  &:disabled {
-    opacity: 0.6;
   }
 }
 </style>
