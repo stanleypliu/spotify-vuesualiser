@@ -125,8 +125,6 @@ async function redirectToSpotifyAuthorize() {
 </script>
 
 <style lang="scss" scoped>
-@import "../assets/stylesheets/variables.scss";
-
 .oauth-wrapper {
   margin: 80px auto;
 

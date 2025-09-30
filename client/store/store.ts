@@ -12,21 +12,5 @@ export const useTokenStore = defineStore("store", () => {
     accessToken.value = newToken;
   }
 
-  function updateAccessToken(newToken) {
-    accessToken.value = newToken;
-  }
-
-  function updateAccessToken(newToken) {
-    accessToken.value = newToken;
-  }
-
-  function updateAccessToken(newToken) {
-    accessToken.value = newToken;
-  }
-
-  function updateAccessToken(newToken) {
-    accessToken.value = newToken;
-  }
-
   return { accessToken, refreshToken, expiresIn, expires, codeVerifier, updateAccessToken };
 });
