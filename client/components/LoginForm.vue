@@ -12,16 +12,16 @@
 <script setup lang="ts">
 import { onMounted } from "vue";
 import { useTokenStore } from "../store/store";
+import { useSpotifyAuth } from "../composables/useSpotifyAuth";
 
 const store = useTokenStore();
+const { redirectToSpotifyAuthorize } = useSpotifyAuth();
 
 const emit = defineEmits(["logged-in"]);
 const clientId = import.meta.env.VITE_CLIENT_ID; // your clientId
 const redirectUrl = "http://localhost:5173"; // your redirect URL - must be localhost URL and/or HTTPS
 
-const authorizationEndpoint = "https://accounts.spotify.com/authorize";
 const tokenEndpoint = "https://accounts.spotify.com/api/token";
-const scope = "user-read-private user-read-email user-top-read";
 
 function saveToken(response) {
   const { access_token, refresh_token, expires_in } = response;
@@ -91,43 +91,7 @@ async function getToken(code: string) {
 }
 
 async function loginWithSpotifyClick() {
-  await redirectToSpotifyAuthorize();
-}
-
-async function redirectToSpotifyAuthorize() {
-  const possible =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  const randomValues = crypto.getRandomValues(new Uint8Array(64));
-  const randomString = randomValues.reduce(
-    (acc, x) => acc + possible[x % possible.length],
-    ""
-  );
-
-  const code_verifier = randomString;
-  const data = new TextEncoder().encode(code_verifier);
-  const hashed = await crypto.subtle.digest("SHA-256", data);
-
-  const code_challenge_base64 = btoa(
-    String.fromCharCode(...new Uint8Array(hashed))
-  )
-    .replace(/=/g, "")
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_");
-
-  window.localStorage.setItem("code_verifier", code_verifier);
-
-  const authUrl = new URL(authorizationEndpoint);
-  const params = {
-    response_type: "code",
-    client_id: clientId,
-    scope: scope,
-    code_challenge_method: "S256",
-    code_challenge: code_challenge_base64,
-    redirect_uri: redirectUrl,
-  };
-
-  authUrl.search = new URLSearchParams(params).toString();
-  window.location.href = authUrl.toString(); // Redirect the user to the authorization server for login
+  await redirectToSpotifyAuthorize(clientId, redirectUrl);
 }
 </script>
 
