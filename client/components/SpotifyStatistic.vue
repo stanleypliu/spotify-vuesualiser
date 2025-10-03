@@ -22,7 +22,7 @@ import { useTokenStore } from "../store/store";
 const store = useTokenStore();
 const props = defineProps({
   slide: {
-    type: Number,
+    type: String,
     required: true,
   },
   component: {

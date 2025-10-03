@@ -9,7 +9,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { onMounted } from "vue";
 import { useTokenStore } from "../store/store";
 
@@ -17,7 +17,7 @@ const store = useTokenStore();
 
 const emit = defineEmits(["logged-in"]);
 const clientId = import.meta.env.VITE_CLIENT_ID; // your clientId
-const redirectUrl = "http://localhost:3000"; // your redirect URL - must be localhost URL and/or HTTPS
+const redirectUrl = "http://localhost:5173"; // your redirect URL - must be localhost URL and/or HTTPS
 
 const authorizationEndpoint = "https://accounts.spotify.com/authorize";
 const tokenEndpoint = "https://accounts.spotify.com/api/token";
@@ -25,9 +25,8 @@ const scope = "user-read-private user-read-email user-top-read";
 
 function saveToken(response) {
   const { access_token, refresh_token, expires_in } = response;
-  console.log(store);
 
-  store.update((state) => {
+  store.$patch((state) => {
     state.accessToken = access_token;
     state.refreshToken = refresh_token;
     state.expiresIn = expires_in;
@@ -62,25 +61,33 @@ onMounted(() => {
   handleTokenExchange();
 });
 
-// Soptify API Calls
-async function getToken(code) {
-  const code_verifier = store.codeVerifier;
+async function getToken(code: string) {
+  try {
+    const codeVerifier: string | null =
+      window.localStorage.getItem("code_verifier");
 
-  const response = await fetch(tokenEndpoint, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: new URLSearchParams({
-      client_id: clientId,
-      grant_type: "authorization_code",
-      code: code,
-      redirect_uri: redirectUrl,
-      code_verifier: code_verifier,
-    }),
-  });
+    if (!codeVerifier) {
+      throw new Error("Missing code verifier");
+    }
 
-  return await response.json();
+    const response = await fetch(tokenEndpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        client_id: clientId,
+        grant_type: "authorization_code",
+        code: code,
+        redirect_uri: redirectUrl,
+        code_verifier: codeVerifier,
+      }),
+    });
+
+    return await response.json();
+  } catch {
+    console.error("Couldn't login");
+  }
 }
 
 async function loginWithSpotifyClick() {
@@ -107,7 +114,7 @@ async function redirectToSpotifyAuthorize() {
     .replace(/\+/g, "-")
     .replace(/\//g, "_");
 
-  store.codeVerifier = code_verifier;
+  window.localStorage.setItem("code_verifier", code_verifier);
 
   const authUrl = new URL(authorizationEndpoint);
   const params = {

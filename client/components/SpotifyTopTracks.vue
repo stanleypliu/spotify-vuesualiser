@@ -39,7 +39,7 @@ const props = defineProps({
 const topTracks = ref();
 
 function formatTopTracks() {
-  topTracks.value = props.data.items.map((item) => {
+  topTracks.value = props.data?.items.map((item) => {
     return {
       name: item.name,
       artists: item.artists.map((artist) => artist.name).join(", "),
@@ -76,7 +76,7 @@ function selectTimePeriod(param) {
   emit("clicked-time-period", param);
   defaultTimePeriod.value = timeOptions.find(
     (option) => option.param === param
-  )?.label;
+  )?.label || timeOptions[0].label;
 }
 </script>
 

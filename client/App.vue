@@ -64,7 +64,7 @@ onMounted(async () => {
 
 async function logoutClick() {
   localStorage.clear();
-  window.location.href = "http://localhost:3000";
+  window.location.href = "http://localhost:5173";
 }
 
 async function getUserData() {
@@ -130,8 +130,8 @@ async function regenerateTokenClick() {
 .wrapper {
   z-index: 1;
 
-  height: 100%;
-  width: 100%;
+  height: 100vh;
+  width: 100vw;
 
   display: flex;
   justify-content: center;

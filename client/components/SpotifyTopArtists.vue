@@ -37,12 +37,14 @@ const props = defineProps({
 const topArtists = ref();
 
 function loadImages() {
-  topArtists.value = props.data.items.map((item) => {
-    return {
-      name: item.name,
-      image: item.images[2].url,
-    };
-  });
+  topArtists.value = props.data.items.map(
+    (item: { name: string; images: { url: string }[] }) => {
+      return {
+        name: item.name,
+        image: item.images[2].url,
+      };
+    }
+  );
 }
 
 loadImages();
@@ -61,11 +63,11 @@ const timeOptions = [
 
 const defaultTimePeriod = ref(timeOptions[1].label);
 
-function selectTimePeriod(param) {
+function selectTimePeriod(param: (typeof timeOptions)[number]["param"]) {
   emit("clicked-time-period", param);
-  defaultTimePeriod.value = timeOptions.find(
-    (option) => option.param === param
-  )?.label;
+  defaultTimePeriod.value =
+    timeOptions.find((option) => option.param === param)?.label ||
+    timeOptions[0].label;
 }
 
 // // Declare the chart dimensions and margins.

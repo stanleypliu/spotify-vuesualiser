@@ -16,5 +16,8 @@ export default defineConfig({
         additionalData: `@import "@/assets/stylesheets/variables.scss";`
       }
     }
-  }
+  },
+  server: {
+    port: 5173,
+  },
 })

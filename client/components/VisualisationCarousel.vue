@@ -1,6 +1,6 @@
 <template>
   <carousel>
-    <slide v-for="slide in Object.keys(SLIDE_CONFIG).length" :key="slide">
+    <slide v-for="slide in Object.keys(SLIDE_CONFIG)" :key="slide">
       <spotify-statistic
         :slide="slide"
         :component="SLIDE_CONFIG[slide].component"
@@ -50,7 +50,7 @@ const SLIDE_CONFIG = {
 
 .carousel__slide {
   padding: 10px;
-  min-height: 900px;
+  height: 70vh;
 }
 
 .carousel__icon {
